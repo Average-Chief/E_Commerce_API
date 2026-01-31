@@ -237,3 +237,97 @@ price stored in cents
 no cascade delete on orders
 product stock never negative
 
+
+
+
+
+
+3️⃣ refresh_access_token(refresh_token)
+Responsibility
+
+Rotate refresh token
+
+Issue new access token
+
+Steps
+
+Hash incoming refresh token
+
+Look up refresh token row
+
+Validate:
+
+exists
+
+not revoked
+
+not expired
+
+Revoke old refresh token
+
+Generate new refresh token
+
+Store new token
+
+Issue new access token
+
+Commit
+
+Returns
+{
+  access_token,
+  refresh_token,
+  expires_in
+}
+
+Errors
+
+InvalidRefreshToken
+
+4️⃣ logout_user(refresh_token)
+Responsibility
+
+Kill session
+
+Steps
+
+Hash refresh token
+
+Find token row
+
+Mark revoked=True
+
+Commit
+
+Returns
+
+None / success flag
+
+Errors
+
+InvalidRefreshToken (optional to hide)
+
+🔐 Token Rules (NON-NEGOTIABLE)
+Access Token
+
+Short lived (15–30 min)
+
+Contains:
+
+user_id
+
+role
+
+exp
+
+Refresh Token
+
+Long lived (days)
+
+Random, high entropy
+
+NEVER JWT
+
+Stored hashed
+
+One per user

@@ -1,9 +1,14 @@
 from app.utils.errors import UserAlreadyExists, InvalidCredentials, UserInactive, InvalidRefreshToken
 from app.models.user import User
+from app.extensions.db import engine, get_session
+from app.extensions.jwt import generate_access_token
+from app.utils.security import generate_refresh_token, hash_token, get_refresh_token_expiry
 from app.storage.user_storage import addUser, getUserByEmail
 from app.models.refresh_token import RefreshToken
+from app.config import settings
 from passlib.hash import bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from sqlmodel import select
+from datetime import datetime
 
 
 def register_user(email:str, password:str)-> User:
@@ -26,4 +31,39 @@ def login_user(email:str, password:str)-> User:
         raise UserInactive("User account is inactive.")
     if not bcrypt.verify(password, user.password_hash):
         raise InvalidCredentials("Invalid email or password.")
+    with get_session() as session:
+        existing_token = get_active_refresh_token(user.id)
+        if existing_token:
+            existing_token.revoked = True
+            session.add(existing_token)
+            session.commit()
     
+    access_token = generate_access_token(user)
+    raw_refresh_token = generate_refresh_token()
+    hashed_refresh_token = hash_token(raw_refresh_token)
+
+    refresh_token_obj = RefreshToken(
+        user_id = user.id,
+        token_hash = hashed_refresh_token,
+        expires_at = get_refresh_token_expiry(),
+    ) 
+
+    session.add(refresh_token_obj)
+    session.commit()
+
+    return {
+        "access_token": access_token,
+        "refresh_token": raw_refresh_token,
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_SECONDS
+    }
+    
+def get_active_refresh_token(user_id:int):
+    stmt = select(RefreshToken).where(
+        RefreshToken.user_id == user_id,
+        RefreshToken.is_active == True,
+        RefreshToken.expires_at > datetime.utcnow()
+    )
+    with get_session() as session:
+        return session.exec(stmt).first()
+

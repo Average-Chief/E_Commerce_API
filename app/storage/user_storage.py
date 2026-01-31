@@ -1,5 +1,5 @@
 from app.models.user import User
-from app.db.db import engine
+from app.extensions.db import engine
 from sqlmodel import Session, select
 
 def addUser(user:User)->None:
