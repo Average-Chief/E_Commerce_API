@@ -67,3 +67,55 @@ def get_active_refresh_token(user_id:int):
     with get_session() as session:
         return session.exec(stmt).first()
 
+def refresh_access_token(refresh_token:str):
+    hashed_token = hash_token(refresh_token)
+
+    with get_session() as session:
+        stmt = select(RefreshToken).where(
+            RefreshToken.token_hash==hashed_token,
+            RefreshToken.revoked== False,
+            RefreshToken.expires_at > datetime.utcnow()
+        )
+        existing_token = session.exec(stmt).first()
+
+        if not existing_token:
+            raise InvalidRefreshToken("Invalid or expired refresh token.")
+        
+        existing_token.revoked = True
+        session.add(existing_token)
+
+        new_raw_refresh_token = generate_refresh_token()
+        new_hashed_refresh_token = hash_token(new_raw_refresh_token)
+
+        new_refresh_token = RefreshToken(
+            user_id=existing_token.user_id,
+            token_hash=new_hashed_refresh_token,
+            expires_at=get_refresh_token_expiry(),
+        )
+
+        session.add(new_refresh_token)
+        access_token = generate_access_token(existing_token.user_id)
+        session.commit()
+
+    return{
+        "access_token": access_token,
+        "refresh_token": new_raw_refresh_token,
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_SECONDS
+    }
+
+def logout_user(refresh_token:str):
+    hashed_token = hash_token(refresh_token)
+    with get_session() as session:
+        stmt = select(RefreshToken).where(
+            RefreshToken.token_hash==hashed_token,
+            RefreshToken.revoked== False,
+            RefreshToken.expires_at > datetime.utcnow()
+        )
+        existing_token = session.exec(stmt).first()
+        if not existing_token:
+            raise InvalidRefreshToken("Invalid or Expired refresh token.")
+        
+        existing_token.revoked=True
+        session.add(existing_token)
+        session.commit()
