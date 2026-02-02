@@ -11,8 +11,8 @@ from sqlmodel import select
 from datetime import datetime
 
 
-def register_user(email:str, password:str)-> User:
-    if User.exists(email=email):
+def register_user(email:str, password:str)-> int:
+    if getUserByEmail(email=email):
         raise UserAlreadyExists(f"User with email {email} already exists.")
     user = User(
         email=email, 
@@ -20,7 +20,10 @@ def register_user(email:str, password:str)-> User:
         role="USER",
         is_active=True
     )
-    addUser(user)
+    with get_session() as session:
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     return user.id
 
 def login_user(email:str, password:str)-> User:

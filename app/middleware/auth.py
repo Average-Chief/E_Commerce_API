@@ -61,3 +61,4 @@ def admin_required(fn):
         
         return fn(*args, **kwargs)
     return wrapper
+
