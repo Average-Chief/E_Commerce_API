@@ -3,7 +3,7 @@ from flask import request
 import jwt
 from sqlmodel import select
 from app.config import settings
-from app.utils.errors import Unauthorized
+from app.utils.errors import Unauthorized, Forbidden
 from app.models.user import User
 from app.extensions.db import get_session
 from datetime import datetime
@@ -49,4 +49,15 @@ def auth_required(fn):
         request.user = user
 
         return fn(*args,**kwargs)
+    return wrapper
+
+def admin_required(fn):
+    @wraps(fn)
+    @auth_required
+    def wrapper(*args,**kwargs):
+        user = request.user
+        if user.role.lower()!='admin':
+            raise Forbidden("Admin access required.")
+        
+        return fn(*args, **kwargs)
     return wrapper

@@ -30,3 +30,6 @@ class UserInactive(Exception):
 
 class Unauthorized(Exception):
     pass
+
+class Forbidden(Exception):
+    pass
