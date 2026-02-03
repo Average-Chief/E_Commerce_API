@@ -33,3 +33,16 @@ class Unauthorized(Exception):
 
 class Forbidden(Exception):
     pass
+
+class InvalidProductData(Exception):
+    pass
+
+class ProductNotFound(Exception):
+    pass
+
+class ProductInactive(Exception):
+    pass
+
+class InvalidStockValue(Exception):
+    pass
+
