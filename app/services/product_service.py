@@ -19,16 +19,12 @@ def create_product(title:str, series:str, author:str, price_cents:int, stock:int
             price_cents=price_cents,
             stock = stock,
             is_active = True,
-            created_at = datetime.utcnow(),
         )
         session.add(new_product)
         session.commit()
         session.refresh(new_product)
 
-    return {
-        "message": "Product added Successfully",
-        "product_id": new_product.id
-    }
+    return new_product.id
 
 def update_product(
     product_id: int,
@@ -79,8 +75,47 @@ def update_product_stock(product_id:int, stock:int):
             "stock": product.stock
         }
 
+def deactivate_product(product_id:int):
+    with get_session() as session:
+        product = getProductById(session, product_id)
 
+        if not product:
+            raise ProductNotFound("Product not found.")
+
+        product.is_active = False
+
+        session.add(product)
+        session.commit()
+        session.refresh()
+        return {
+            "message": "Product deactivated."
+        }    
+
+def get_product_by_id(product_id:int):
+    with get_session() as session:
+        product = getProductById(session, product_id)
+        if not product:
+            raise ProductNotFound("Product not found.")
+        
+        if not product.is_active:
+            raise ProductInactive("Product is in-active.")
+        
+        return product
     
+def list_products(search: str | None=None):
+    with get_session() as session:
+        stmt = select(Product).where(Product.is_active==True)
+        if search:
+            search_term = f"%{search.lower()}%"
+            stmt = stmt.where(
+                (Product.title.ilike(search_term)) |
+                (Product.author.ilike(search_term)) |
+                (Product.series.ilike(search_term))
+            )
+        products = session.exec(stmt).all()
+
+        return products
+
 
     
     
