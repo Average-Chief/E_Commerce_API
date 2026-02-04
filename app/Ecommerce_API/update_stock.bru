@@ -1,0 +1,26 @@
+meta {
+  name: update_stock
+  type: http
+  seq: 7
+}
+
+patch {
+  url: http://127.0.0.1:5000/products/1/stock
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Access_Token_Achal}}
+}
+
+body:json {
+  {
+    "stock": 8
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

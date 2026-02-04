@@ -1,0 +1,20 @@
+meta {
+  name: list_all_products
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://127.0.0.1:5000/products
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Access_Token_Achal}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

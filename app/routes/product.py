@@ -15,12 +15,12 @@ product_bp = Blueprint("products",__name__,url_prefix="/products")
 def get_products():
     search = request.args.get("q")
     products = list_products(search)
-    return jsonify(products), 200
+    return jsonify([p.model_dump() for p in products]), 200
 
 @product_bp.get("/<int:product_id>")
 def get_product(product_id:int):
     product = get_product_by_id(product_id)
-    return jsonify(product), 200
+    return jsonify(product.model_dump()), 200
 
 @product_bp.post("/")
 @admin_required
@@ -33,7 +33,10 @@ def create_product_route():
         price_cents = data["price_cents"],
         stock = data["stock"]
     )
-    return jsonify(result), 201
+    return jsonify({
+        "message": "Product added successfully.",
+        "product_id": result
+    }), 201
 
 @product_bp.patch("/<int:product_id>")
 @admin_required
@@ -46,7 +49,7 @@ def update_product_route(product_id:int):
         series = data.get("series"),
         price_cents = data.get("price_cents"),
     )
-    return jsonify(product), 200
+    return jsonify(product.model_dump()), 200
 
 @product_bp.patch("/<int:product_id>/stock")
 @admin_required

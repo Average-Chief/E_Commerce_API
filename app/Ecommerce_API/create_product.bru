@@ -1,0 +1,30 @@
+meta {
+  name: create_product
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://127.0.0.1:5000/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Access_Token_Achal}}
+}
+
+body:json {
+  {
+    "title": "JUJUTSU KAISEN Vol. 4",
+    "series": "JUJUTSU KAISEN",
+    "author": "GEGE AKUTAMI",
+    "price_cents": 551,
+    "stock": 3
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

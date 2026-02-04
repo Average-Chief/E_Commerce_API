@@ -32,7 +32,7 @@ def auth_required(fn):
         except jwt.InvalidTokenError:
             raise Unauthorized("Invalid Access token.")
         
-        user_id = payload.get("sub")
+        user_id = int(payload["sub"])
         if not user_id:
             raise Unauthorized("Invalid access token payload.")
         

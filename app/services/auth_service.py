@@ -3,7 +3,7 @@ from app.models.user import User
 from app.extensions.db import engine, get_session
 from app.extensions.jwt import generate_access_token
 from app.utils.security import generate_refresh_token, hash_token, get_refresh_token_expiry
-from app.storage.user_storage import addUser, getUserByEmail
+from app.storage.user_storage import getUserById, getUserByEmail
 from app.models.refresh_token import RefreshToken
 from app.config import settings
 from passlib.hash import bcrypt
@@ -70,23 +70,25 @@ def get_active_refresh_token(user_id:int):
     with get_session() as session:
         return session.exec(stmt).first()
 
-def refresh_access_token(refresh_token:str):
+def refresh_access_token(refresh_token: str):
     hashed_token = hash_token(refresh_token)
 
     with get_session() as session:
         stmt = select(RefreshToken).where(
-            RefreshToken.token_hash==hashed_token,
-            RefreshToken.revoked== False,
+            RefreshToken.token_hash == hashed_token,
+            RefreshToken.revoked == False,
             RefreshToken.expires_at > datetime.utcnow()
         )
         existing_token = session.exec(stmt).first()
 
         if not existing_token:
             raise InvalidRefreshToken("Invalid or expired refresh token.")
-        
+
+        # Revoke old token
         existing_token.revoked = True
         session.add(existing_token)
 
+        # Generate new refresh token
         new_raw_refresh_token = generate_refresh_token()
         new_hashed_refresh_token = hash_token(new_raw_refresh_token)
 
@@ -97,15 +99,20 @@ def refresh_access_token(refresh_token:str):
         )
 
         session.add(new_refresh_token)
-        access_token = generate_access_token(existing_token.user_id)
+
+        # 🔥 Fetch user before generating access token
+        user = getUserById(existing_token.user_id)
+        access_token = generate_access_token(user)
+
         session.commit()
 
-    return{
+    return {
         "access_token": access_token,
         "refresh_token": new_raw_refresh_token,
         "token_type": "bearer",
         "expires_in": settings.ACCESS_TOKEN_EXPIRE_SECONDS
     }
+
 
 def logout_user(refresh_token:str):
     hashed_token = hash_token(refresh_token)

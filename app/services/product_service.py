@@ -86,7 +86,7 @@ def deactivate_product(product_id:int):
 
         session.add(product)
         session.commit()
-        session.refresh()
+        session.refresh(product)
         return {
             "message": "Product deactivated."
         }    
