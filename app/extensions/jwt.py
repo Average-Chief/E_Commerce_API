@@ -12,6 +12,6 @@ def generate_access_token(user):
 
     return jwt.encode(
         payload,
-        settings.SECRET_KET,
+        settings.SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM
     )

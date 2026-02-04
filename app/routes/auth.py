@@ -37,6 +37,6 @@ def refresh():
 @auth_required
 def logout():
     data = request.get_json()
-    result = login_user(data["refresh_token"])
+    result = logout_user(data["refresh_token"])
     return jsonify({"message": "Logged out successfully"}), 200
 

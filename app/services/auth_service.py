@@ -64,7 +64,7 @@ def login_user(email:str, password:str)-> User:
 def get_active_refresh_token(user_id:int):
     stmt = select(RefreshToken).where(
         RefreshToken.user_id == user_id,
-        RefreshToken.is_active == True,
+        RefreshToken.revoked == True,
         RefreshToken.expires_at > datetime.utcnow()
     )
     with get_session() as session:
