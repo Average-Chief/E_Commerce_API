@@ -46,3 +46,8 @@ class ProductInactive(Exception):
 class InvalidStockValue(Exception):
     pass
 
+class InvalidQuantity(Exception):
+    pass
+
+class InsufficientStock(Exception):
+    pass
