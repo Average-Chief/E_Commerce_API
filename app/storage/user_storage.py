@@ -14,8 +14,7 @@ def getUserByEmail(email:str)-> User | None:
         result = session.exec(stmt).first()
         return result
     
-def getUserById(id:int)->User | None:
-    with Session(engine) as session:
+def getUserById(session, id:int)->User | None:
         stmt = select(User).where(User.id==id)
         result = session.exec(stmt).first()
         return result
