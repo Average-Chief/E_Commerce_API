@@ -4,14 +4,15 @@ from datetime import datetime
 from app.extensions.db import get_session
 from app.storage.product_storage import getProductById
 from app.storage.user_storage import getUserById
-from app.storage.cart_storage import getCartbyUserId, checkCartItem
+from app.storage.cart_storage import getCartbyUserId, getCartItem
 from app.utils.errors import (
     UserInactive, 
     UserNotFound, 
     ProductInactive, 
     ProductNotFound, 
     InvalidQuantity, 
-    InsufficientStock
+    InsufficientStock,
+    CartItemNotFound
 )
 
 def get_or_create_cart(user_id: int):
@@ -45,7 +46,7 @@ def add_to_cart(user_id:int, product_id:int, quantity:int):
             raise InsufficientStock("Not enough stock available.")
         
         cart = get_or_create_cart(user_id)
-        cart_item = checkCartItem(session, cart.id, product.id)
+        cart_item = getCartItem(session, cart.id, product.id)
         if cart_item:
             new_quantity = cart_item.quantity + quantity
 
@@ -69,8 +70,36 @@ def add_to_cart(user_id:int, product_id:int, quantity:int):
         return cart
 
 def update_cart_item(user_id:int, product_id:int, quantity:int):
-    if quantity<=0:
+    if quantity<0:
         raise InvalidQuantity("Quantity should be greater than zero.")
     with get_session() as session:
-        user_cart = getCartbyUserId(session, user_id)
+        cart = get_or_create_cart(session, user_id)
+        cart_item = getCartItem(session, cart.id, product_id)
+        if not cart_item:
+            raise CartItemNotFound("Item not found in cart.")
         
+        if quantity==0:
+            session.delete(cart_item)
+            cart.update_at = datetime.utcnow()
+            session.add(cart)
+            session.commit()
+            return cart
+        
+        product = getProductById(session,product_id)
+        if not product:
+            raise ProductNotFound("Product not found.")
+        if not product.is_active:
+            raise ProductInactive("Product is inactive.")
+        if quantity>product.stock:
+            raise InsufficientStock("Not enough stock available.")
+        
+        cart_item.quantity = quantity
+        session.add(cart_item)
+        cart.update_at = datetime.utcnow()
+        session.add(cart)
+        session.commit()
+        session.refresh(cart)
+        return cart
+    
+        
+

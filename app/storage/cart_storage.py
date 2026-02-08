@@ -1,13 +1,13 @@
 from app.models.cart import Cart, CartItem
-from sqlmodel import select, Session
-from app.extensions.db import engine
+from sqlmodel import select
+from typing import Optional
 
 def getCartbyUserId(session, user_id:int):
         stmt = select(Cart).where(Cart.user_id==user_id)
         result = session.exec(stmt).first()
         return result
 
-def checkCartItem(session, cart_id:int, product_id:int):
+def getCartItem(session, cart_id:int, product_id:int) -> Optional[CartItem]:
         stmt = select(CartItem).where(
             CartItem.cart_id == cart_id,
             CartItem.product_id == product_id
