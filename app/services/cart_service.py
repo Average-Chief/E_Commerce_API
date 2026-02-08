@@ -67,3 +67,10 @@ def add_to_cart(user_id:int, product_id:int, quantity:int):
         session.refresh(cart)
 
         return cart
+
+def update_cart_item(user_id:int, product_id:int, quantity:int):
+    if quantity<=0:
+        raise InvalidQuantity("Quantity should be greater than zero.")
+    with get_session() as session:
+        user_cart = getCartbyUserId(session, user_id)
+        

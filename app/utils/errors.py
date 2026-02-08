@@ -51,3 +51,7 @@ class InvalidQuantity(Exception):
 
 class InsufficientStock(Exception):
     pass
+
+class CartItemNotFound(Exception):
+    pass
+
