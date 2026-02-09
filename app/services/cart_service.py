@@ -1,10 +1,11 @@
 from app.models.cart import Cart, CartItem
+from app.models.product import Product
 from sqlmodel import select
 from datetime import datetime
 from app.extensions.db import get_session
 from app.storage.product_storage import getProductById
 from app.storage.user_storage import getUserById
-from app.storage.cart_storage import getCartbyUserId, getCartItem
+from app.storage.cart_storage import getCartbyUserId, getCartItem, getAllItems
 from app.utils.errors import (
     UserInactive, 
     UserNotFound, 
@@ -111,4 +112,44 @@ def remove_from_cart(user_id:int, product_id:int):
         session.commit()
         return cart
 
-def get_cart
+def get_cart(user_id:int):
+    with get_session() as session:
+        cart = get_or_create_cart(session, user_id)
+        cart_items = getAllItems(session, cart.id)
+        response_items = []
+        total_cents = 0
+
+        for item in cart_items:
+            stmt = select(Product).where(Product.id == item.product_id)
+            product = session.exec(stmt).first()
+
+            if not product or not product.is_active:
+                continue
+
+            subtotal = product.price_cents * item.quantity 
+            total_cents+= subtotal
+
+            response_items.append({
+                "product_id":product.id,
+                "title":product.title,
+                "price_cents":product.price_cents,
+                "quantity":item.quantity,
+                "subtotal_cents": subtotal
+            })
+
+        return {
+            "cart_id": cart.id,
+            "items": response_items,
+            "total_cents": total_cents
+        }
+
+def clear_cart(user_id:int):
+    with get_session() as session:
+        cart = get_or_create_cart(session, user_id)
+        cart_items = getAllItems(session, cart.id)
+        for item in cart_items:
+            session.delete(item)
+        cart.update_at = datetime.utcnow()
+        session.add(cart)
+        session.commit()
+

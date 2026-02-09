@@ -15,3 +15,7 @@ def getCartItem(session, cart_id:int, product_id:int) -> Optional[CartItem]:
         cart_item = session.exec(stmt).first()
         return cart_item
 
+def getAllItems(session, cart_id:int):
+        stmt = select(CartItem).where(CartItem.cart_id == cart_id)
+        result = session.exec(stmt).all()
+        return result
