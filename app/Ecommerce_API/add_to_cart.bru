@@ -1,0 +1,27 @@
+meta {
+  name: add_to_cart
+  type: http
+  seq: 11
+}
+
+post {
+  url: http://127.0.0.1:5000/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Access_Token_Achal}}
+}
+
+body:json {
+  {
+    "product_id": 2,
+    "quantity":1
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

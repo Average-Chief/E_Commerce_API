@@ -16,23 +16,22 @@ from app.utils.errors import (
     CartItemNotFound
 )
 
-def get_or_create_cart(user_id: int):
-    with get_session() as session:
-        user = getUserById(session, user_id)
-        if not user:
-            raise UserNotFound("User not found.")
-        if not user.is_active:
-            raise UserInactive("User account is inactive.")
+def get_or_create_cart(session, user_id: int):
+    user = getUserById(session, user_id)
+    if not user:
+        raise UserNotFound("User not found.")
+    if not user.is_active:
+        raise UserInactive("User account is inactive.")
 
-        cart = getCartbyUserId(session, user_id)
-        if cart:
-            return cart
+    cart = getCartbyUserId(session, user_id)
+    if cart:
+        return cart
 
-        new_cart = Cart(user_id=user_id)
-        session.add(new_cart)
-        session.commit()
-        session.refresh(new_cart)
-        return new_cart
+    new_cart = Cart(user_id=user_id)
+    session.add(new_cart)
+    session.commit()
+    session.refresh(new_cart)
+    return new_cart
 
 def add_to_cart(user_id:int, product_id:int, quantity:int):
     if quantity<=0:
@@ -46,7 +45,7 @@ def add_to_cart(user_id:int, product_id:int, quantity:int):
         if product.stock<quantity:
             raise InsufficientStock("Not enough stock available.")
         
-        cart = get_or_create_cart(user_id)
+        cart = get_or_create_cart(session, user_id)
         cart_item = getCartItem(session, cart.id, product.id)
         if cart_item:
             new_quantity = cart_item.quantity + quantity
@@ -81,7 +80,7 @@ def update_cart_item(user_id:int, product_id:int, quantity:int):
         
         if quantity==0:
             session.delete(cart_item)
-            cart.update_at = datetime.utcnow()
+            cart.updated_at = datetime.utcnow()
             session.add(cart)
             session.commit()
             return cart
@@ -96,7 +95,7 @@ def update_cart_item(user_id:int, product_id:int, quantity:int):
         
         cart_item.quantity = quantity
         session.add(cart_item)
-        cart.update_at = datetime.utcnow()
+        cart.updated_at = datetime.utcnow()
         session.add(cart)
         session.commit()
         session.refresh(cart)
@@ -109,7 +108,7 @@ def remove_from_cart(user_id:int, product_id:int):
         if not item:
             raise CartItemNotFound("Item not found in cart.")
         session.delete(item)
-        cart.update_at = datetime.utcnow()
+        cart.updated_at = datetime.utcnow()
         session.add(cart)
         session.commit()
         return cart
@@ -151,7 +150,7 @@ def clear_cart(user_id:int):
         cart_items = getAllItems(session, cart.id)
         for item in cart_items:
             session.delete(item)
-        cart.update_at = datetime.utcnow()
+        cart.updated_at = datetime.utcnow()
         session.add(cart)
         session.commit()
 

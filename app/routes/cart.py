@@ -13,21 +13,22 @@ cart_bp  = Blueprint("cart",__name__, url_prefix="/cart")
 @cart_bp.get("/")
 @auth_required
 def get_cart_route():
-    cart = get_cart(g.user.id)
+    cart = get_cart(request.user.id)
     return jsonify(cart), 200
 
 @cart_bp.post("/items")
 @auth_required
 def add_item_to_cart_route():
     data = request.get_json() or {}
-    cart = add_to_cart(g.user.id, data["product_id"], data["quantity"])
-    return jsonify(cart), 201
+    add_to_cart(request.user.id, data["product_id"], data["quantity"])
+    cart = get_cart(request.user.id)
+    return jsonify(cart.m), 201
 
 @cart_bp.patch("/items/<int:product_id>")
 @auth_required
 def update_cart_item_route(product_id:int):
     data = request.get_json() or {}
-    cart = update_cart_item(g.user.id, product_id, data["quantity"])
+    cart = update_cart_item(request.user.id, product_id, data["quantity"])
     return jsonify({
         "message": "Cart Updated",
         "updated_cart": cart
@@ -36,13 +37,14 @@ def update_cart_item_route(product_id:int):
 @cart_bp.delete("/items/<int:product_id>")
 @auth_required
 def remove_item_from_cart_route(product_id:int):
-    cart = remove_from_cart(g.user.id, product_id)
+    remove_from_cart(request.user.id, product_id)
+    cart = get_cart(request.user.id)
     return jsonify(cart), 200
 
 @cart_bp.delete("/clear")
 @auth_required
 def clear_cart_route():
-    clear_cart(g.user.id)
+    clear_cart(request.user.id)
     return jsonify ({
         "message":"Cart is Empty"
     }), 200

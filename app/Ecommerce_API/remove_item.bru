@@ -1,0 +1,20 @@
+meta {
+  name: remove_item
+  type: http
+  seq: 13
+}
+
+delete {
+  url: http://127.0.0.1:5000/cart/items/2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Access_Token_Achal}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
