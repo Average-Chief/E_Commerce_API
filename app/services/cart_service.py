@@ -109,6 +109,8 @@ def remove_from_cart(user_id:int, product_id:int):
         if not item:
             raise CartItemNotFound("Item not found in cart.")
         session.delete(item)
+        cart.update_at = datetime.utcnow()
+        session.add(cart)
         session.commit()
         return cart
 
