@@ -5,7 +5,7 @@ from app.services.cart_service import (
     clear_cart,
     update_cart_item
 )
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify
 from app.middleware.auth import auth_required
 
 cart_bp  = Blueprint("cart",__name__, url_prefix="/cart")
@@ -30,8 +30,7 @@ def update_cart_item_route(product_id:int):
     data = request.get_json() or {}
     cart = update_cart_item(request.user.id, product_id, data["quantity"])
     return jsonify({
-        "message": "Cart Updated",
-        "updated_cart": cart
+        "message": "Cart Updated"
     }), 200
 
 @cart_bp.delete("/items/<int:product_id>")

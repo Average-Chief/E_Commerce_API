@@ -1,11 +1,11 @@
 meta {
-  name: add_to_cart
+  name: update_cart
   type: http
-  seq: 11
+  seq: 15
 }
 
-post {
-  url: http://127.0.0.1:5000/cart/items
+patch {
+  url: http://127.0.0.1:5000/cart/items/6
   body: json
   auth: bearer
 }
@@ -16,7 +16,6 @@ auth:bearer {
 
 body:json {
   {
-    "product_id": 6,
     "quantity":1
   }
 }
