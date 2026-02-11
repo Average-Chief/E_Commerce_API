@@ -22,7 +22,7 @@ def add_item_to_cart_route():
     data = request.get_json() or {}
     add_to_cart(request.user.id, data["product_id"], data["quantity"])
     cart = get_cart(request.user.id)
-    return jsonify(cart.m), 201
+    return jsonify(cart), 201
 
 @cart_bp.patch("/items/<int:product_id>")
 @auth_required
