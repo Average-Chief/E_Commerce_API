@@ -55,3 +55,5 @@ class InsufficientStock(Exception):
 class CartItemNotFound(Exception):
     pass
 
+class EmptyCartError(Exception):
+    pass
