@@ -6,7 +6,9 @@ from app.utils.errors import (
     ProductInactive,
     ProductNotFound,
     InsufficientStock,
-    EmptyCartError
+    EmptyCartError,
+    OrderNotFound,
+    Unauthorized
 )
 from app.services.cart_service import get_or_create_cart
 from sqlmodel import select
@@ -65,7 +67,39 @@ def create_order_from_cart(user_id:int):
 
         return order.id
 
+def get_order_by_id(order_id:int, user_id:int):
+    with get_session() as session:
+        stmt = select(Order).where(Order.id==order_id, Order.user_id==user_id)
+        order = session.exec(stmt).first()
+        if not order:
+            raise OrderNotFound("Order not found.")
+        if order.user_id != user_id:
+            raise Unauthorized("You do not have permission to view this order.")
+        
+        stmt = select(OrderItems).where(OrderItems.order_id==order.id)
+        items = session.exec(stmt).all()
+        order_items = []
+        total = 0
 
+        for item in items:
+            subtotal = item.price_snapshot * item.quantity
+            total += subtotal
+            order_items.append({
+                "product_id": item.product_id,
+                "title": item.title_snapshot,
+                "price_cents": item.price_snapshot,
+                "quantity": item.quantity,
+                "subtotal_cents": subtotal
+            })
+        
+        return {
+            "order_id": order.id,
+            "status": order.status,
+            "total_amount_cents": order.total_amount_cents,
+            "items": order_items
+        }
+    
+    
 
 
     
