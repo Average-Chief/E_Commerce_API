@@ -99,7 +99,21 @@ def get_order_by_id(order_id:int, user_id:int):
             "items": order_items
         }
     
-    
+def list_user_orders(user_id:int):
+    with get_session() as session:
+        stmt = select(Order).where(Order.user_id==user_id).order_by(Order.created_at.desc())
+        orders = session.exec(stmt).all()
+        result = []
+        for order in orders:
+            result.append({
+                "order_id": order.id,
+                "status": order.status,
+                "total_cents": order.total_amount_cents,
+                "created_at": order.created_at
+            })
+        return result
+
+
 
 
     
