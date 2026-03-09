@@ -3,6 +3,8 @@ from app.models.product import Product
 from app.storage.cart_storage import getAllItems
 from app.extensions.db import get_session
 from app.utils.errors import (
+    OrderCannotBeCancelled,
+    OrderAlreadyProcessed,
     ProductInactive,
     ProductNotFound,
     InsufficientStock,
@@ -113,7 +115,46 @@ def list_user_orders(user_id:int):
             })
         return result
 
+def mark_order_paid(order_id:int, user_id:int):
+    with get_session() as session:
+        stmt = select(Order).where(Order.id==order_id, Order.user_id==user_id)
+        order = session.exec(stmt).first()
+        if not order:
+            raise OrderNotFound("Order not found.")
+        if order.status != "PENDING":
+            raise OrderAlreadyProcessed("Order has already been processed.")
+        
+        stmt = select(OrderItems).where(OrderItems.order_id==order.id)
+        items = session.exec(stmt).all()
+        for item in items:
+            stmt = select(Product).where(Product.id==item.product_id)
+            product = session.exec(stmt).first()
+            if not product or product.stock < item.quantity:
+                raise InsufficientStock("Not enough stock available to complete the order.")
+            product.stock -= item.quantity
+            session.add(product)
+        
+        order.status = "PAID"
+        session.add(order)
 
+        cart = get_or_create_cart(session, user_id)
+        cart_items = getAllItems(session, cart.id)
+        for ci in cart_items:
+            session.delete(ci)
+        session.commit()
+        return order.id
 
-
+def cancel_order(order_id:int, user_id:int):
+    with get_session() as session:
+        stmt = select(Order).where(Order.id==order_id, Order.user_id==user_id)
+        order = session.exec(stmt).first()
+        if not order:
+            raise OrderNotFound("Order not found.")
+        if order.status != "PENDING":
+            raise OrderCannotBeCancelled("Only pending orders can be cancelled.")
+        
+        order.status = "CANCELLED"
+        session.add(order)
+        session.commit()
+        return order.id
     

@@ -60,3 +60,9 @@ class EmptyCartError(Exception):
 
 class OrderNotFound(Exception):
     pass
+
+class OrderAlreadyProcessed(Exception):
+    pass
+
+class OrderCannotBeCancelled(Exception):
+    pass
